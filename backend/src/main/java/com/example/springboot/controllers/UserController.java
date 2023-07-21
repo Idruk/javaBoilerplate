@@ -2,6 +2,8 @@ package com.example.springboot.controllers;
 
 import java.util.List;
 import java.util.Map;
+import java.util.HashMap;
+import java.util.Iterator;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -11,7 +13,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.example.springboot.entity.UserRepository;
+import com.example.springboot.service.UserService;
 import com.example.springboot.entity.User;
 
 @RestController
@@ -19,19 +21,42 @@ import com.example.springboot.entity.User;
 public class UserController {
 
 	@Autowired
-	private UserRepository userRepository;
+	private UserService UserService;
 
 	@GetMapping("/users")
 	public List<User> getAllUsers() {
-		return userRepository.findAll();
+		return UserService.findAllUser();
 	}
 
 	@PostMapping("/register")
-	public ResponseEntity<User> signin(@RequestParam Map<String, String> json_Input) {
-		System.out.println(json_Input);
-		System.out.println(json_Input.get(("username")));
+	public ResponseEntity<Object> signin(@RequestParam Map<String, String> json_Input) {
+		String username = json_Input.getOrDefault("username", null);
+		String password = json_Input.getOrDefault("password", null);
+		Map<String, Object> respError = new HashMap<String, Object>();
 
-		User resp = userRepository.save(new User(json_Input.get("username"), json_Input.get("password"), null));
+		List<User> users;
+		Iterator<User> iterator;
+
+		if (username == null || password == null) {
+			respError.put("message", "Error in validation /user/register");
+			return ResponseEntity.ok(respError);
+		}
+
+		users = UserService.findAllUser();
+		iterator = users.iterator();
+
+		while (iterator.hasNext()) {
+			User elem = iterator.next();
+
+			if (elem.getUsername().equals(username)) {
+				respError.put("message", "Error username already exist");
+
+				return ResponseEntity.ok(respError);
+			}
+		}
+
+		User resp = UserService.saveUser(
+				new User(username, password, null));
 
 		return ResponseEntity.ok(resp);
 	}
