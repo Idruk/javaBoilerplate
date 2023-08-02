@@ -5,6 +5,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityCustomizer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
+import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @EnableWebSecurity
@@ -13,16 +15,19 @@ public class SecurityConfiguration {
 
     @Bean
     public WebSecurityCustomizer webSecurityCustomizer() {
-        return (web) -> web.ignoring().requestMatchers("/user/register", "/user/signin");
+
+        // return (web) -> web.ignoring().requestMatchers("/user/register",
+        // "user/signin");
+        return (web) -> web.ignoring().anyRequest();
+        // ignoring().requestMatchers("/*");
     }
+}
 
-    // @Bean
-    // public SecurityFilterChain securityFilterChain(HttpSecurity http) throws
-    // Exception {
-    // http
-    // .authorizeHttpRequests((authz) -> authz
-    // .requestMatchers("/user/**").permitAll());
-    // return http.build();
-    // }
+@Configuration
+class WebMvcConfig implements WebMvcConfigurer {
 
+    @Override
+    public void addInterceptors(InterceptorRegistry registry) {
+        registry.addInterceptor(new AuthInterceptor()).excludePathPatterns("/user/register", "/user/signin");
+    }
 }

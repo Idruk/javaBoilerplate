@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.springboot.service.UserService;
+import com.example.springboot.utils.JwtUtils;
 import com.example.springboot.entity.User;
 
 @RestController
@@ -37,37 +38,44 @@ public class UserController {
 		return UserService.findAllUser();
 	}
 
+	@GetMapping("/tokenTest")
+	public ResponseEntity<Object> tokenTest() {
+		return ResponseEntity.ok("oui");
+	}
+
 	@PostMapping("/signin")
 	public ResponseEntity<Object> signin(@RequestParam Map<String, String> json_Input) {
 		String username = json_Input.getOrDefault("username", null);
 		String password = json_Input.getOrDefault("password", null);
-		Map<String, Object> respError = new HashMap<String, Object>();
+		Map<String, Object> resp = new HashMap<String, Object>();
 
 		if (username == null || password == null) {
-			respError.put("message", "Error in validation /user/signin");
-			return ResponseEntity.ok(respError);
+			resp.put("message", "Error in validation /user/signin");
+			return ResponseEntity.ok(resp);
 		}
 
 		Optional<User> check = UserService.findUsername(username);
 
 		if (check.isPresent() == false) {
-			respError.put("message", "Error User does not exist");
-			return ResponseEntity.ok(respError);
+			resp.put("message", "Error User does not exist");
+			return ResponseEntity.ok(resp);
 		}
 
 		User user = check.get();
 
-		System.out.println(password);
-		System.out.println(user.getpassword());
-
 		boolean passwordMatches = encoder.matches(password, user.getpassword());
 
 		if (!passwordMatches) {
-			respError.put("message", "Error invalid username or password");
-			return ResponseEntity.ok(respError);
+			resp.put("message", "Error invalid username or password");
+			return ResponseEntity.ok(resp);
 		}
 
-		return ResponseEntity.ok("ok");
+		System.out.println(user.getId());
+
+		System.out.println(JwtUtils.generateJwt(String.valueOf(user.getId())));
+
+		resp.put("token", JwtUtils.generateJwt(String.valueOf(user.getId())));
+		return ResponseEntity.ok(resp);
 	}
 
 	@PostMapping("/register")
